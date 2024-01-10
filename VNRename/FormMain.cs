@@ -309,6 +309,7 @@ namespace VNRename
             myPath = string.Empty;
             myTable.Rows.Clear();
             SetPath();
+            buttonReset_Click(null, null);
         }
 
         private void textPath_TextChanged(object sender, EventArgs e)
@@ -578,7 +579,7 @@ namespace VNRename
 
         private void radioAudioRemoveInfo_CheckedChanged(object sender, EventArgs e)
         {
-            if (radioAudioRemoveInfo.Checked == false)
+            if (radioAudioRemoveInfo.Checked == false || myTable.Rows.Count == 0)
             {
                 return;
             }
@@ -616,7 +617,7 @@ namespace VNRename
 
         private void radioAudioCopyNameToTitle_CheckedChanged(object sender, EventArgs e)
         {
-            if (radioAudioCopyNameToTitle.Checked == false)
+            if (radioAudioCopyNameToTitle.Checked == false || myTable.Rows.Count == 0)
             {
                 return;
             }
