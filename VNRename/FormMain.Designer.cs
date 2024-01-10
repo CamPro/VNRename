@@ -115,6 +115,13 @@
             this._cFilepath = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.buttonClear = new System.Windows.Forms.Button();
             this.buttonRefresh = new System.Windows.Forms.Button();
+            this.tabPage4 = new System.Windows.Forms.TabPage();
+            this.radioAudioRemoveInfo = new System.Windows.Forms.RadioButton();
+            this.radioAudioCopyNameToTitle = new System.Windows.Forms.RadioButton();
+            this.radioAudioCopyTitleToName = new System.Windows.Forms.RadioButton();
+            this.textAudio = new System.Windows.Forms.TextBox();
+            this.buttonAudioAlbum = new System.Windows.Forms.Button();
+            this.buttonAudioArtist = new System.Windows.Forms.Button();
             this.groupBox1.SuspendLayout();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
@@ -132,6 +139,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.numSttBatDau)).BeginInit();
             this.groupBox2.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridRename)).BeginInit();
+            this.tabPage4.SuspendLayout();
             this.SuspendLayout();
             // 
             // groupBox1
@@ -223,6 +231,7 @@
             this.tabControl1.Controls.Add(this.tabPage1);
             this.tabControl1.Controls.Add(this.tabPage2);
             this.tabControl1.Controls.Add(this.tabPage3);
+            this.tabControl1.Controls.Add(this.tabPage4);
             this.tabControl1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.tabControl1.Location = new System.Drawing.Point(4, 50);
             this.tabControl1.Name = "tabControl1";
@@ -1095,6 +1104,85 @@
             this.buttonRefresh.UseVisualStyleBackColor = true;
             this.buttonRefresh.Click += new System.EventHandler(this.buttonRefresh_Click);
             // 
+            // tabPage4
+            // 
+            this.tabPage4.Controls.Add(this.buttonAudioArtist);
+            this.tabPage4.Controls.Add(this.buttonAudioAlbum);
+            this.tabPage4.Controls.Add(this.textAudio);
+            this.tabPage4.Controls.Add(this.radioAudioCopyTitleToName);
+            this.tabPage4.Controls.Add(this.radioAudioCopyNameToTitle);
+            this.tabPage4.Controls.Add(this.radioAudioRemoveInfo);
+            this.tabPage4.Location = new System.Drawing.Point(4, 24);
+            this.tabPage4.Name = "tabPage4";
+            this.tabPage4.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPage4.Size = new System.Drawing.Size(336, 518);
+            this.tabPage4.TabIndex = 3;
+            this.tabPage4.Text = "Khác";
+            this.tabPage4.UseVisualStyleBackColor = true;
+            // 
+            // radioAudioRemoveInfo
+            // 
+            this.radioAudioRemoveInfo.AutoSize = true;
+            this.radioAudioRemoveInfo.Location = new System.Drawing.Point(20, 20);
+            this.radioAudioRemoveInfo.Name = "radioAudioRemoveInfo";
+            this.radioAudioRemoveInfo.Size = new System.Drawing.Size(175, 19);
+            this.radioAudioRemoveInfo.TabIndex = 0;
+            this.radioAudioRemoveInfo.TabStop = true;
+            this.radioAudioRemoveInfo.Text = "Xóa thông tin Bài hát, Video";
+            this.radioAudioRemoveInfo.UseVisualStyleBackColor = true;
+            this.radioAudioRemoveInfo.CheckedChanged += new System.EventHandler(this.radioAudioRemoveInfo_CheckedChanged);
+            // 
+            // radioAudioCopyNameToTitle
+            // 
+            this.radioAudioCopyNameToTitle.AutoSize = true;
+            this.radioAudioCopyNameToTitle.Location = new System.Drawing.Point(20, 60);
+            this.radioAudioCopyNameToTitle.Name = "radioAudioCopyNameToTitle";
+            this.radioAudioCopyNameToTitle.Size = new System.Drawing.Size(184, 19);
+            this.radioAudioCopyNameToTitle.TabIndex = 1;
+            this.radioAudioCopyNameToTitle.TabStop = true;
+            this.radioAudioCopyNameToTitle.Text = "Sao chép Tên bài hát => Title";
+            this.radioAudioCopyNameToTitle.UseVisualStyleBackColor = true;
+            this.radioAudioCopyNameToTitle.CheckedChanged += new System.EventHandler(this.radioAudioCopyNameToTitle_CheckedChanged);
+            // 
+            // radioAudioCopyTitleToName
+            // 
+            this.radioAudioCopyTitleToName.AutoSize = true;
+            this.radioAudioCopyTitleToName.Location = new System.Drawing.Point(20, 100);
+            this.radioAudioCopyTitleToName.Name = "radioAudioCopyTitleToName";
+            this.radioAudioCopyTitleToName.Size = new System.Drawing.Size(184, 19);
+            this.radioAudioCopyTitleToName.TabIndex = 2;
+            this.radioAudioCopyTitleToName.TabStop = true;
+            this.radioAudioCopyTitleToName.Text = "Sao chép Title => Tên bài hát";
+            this.radioAudioCopyTitleToName.UseVisualStyleBackColor = true;
+            this.radioAudioCopyTitleToName.CheckedChanged += new System.EventHandler(this.radioAudioCopyTitleToName_CheckedChanged);
+            // 
+            // textAudio
+            // 
+            this.textAudio.Location = new System.Drawing.Point(20, 150);
+            this.textAudio.Name = "textAudio";
+            this.textAudio.Size = new System.Drawing.Size(300, 21);
+            this.textAudio.TabIndex = 3;
+            // 
+            // buttonAudioAlbum
+            // 
+            this.buttonAudioAlbum.Location = new System.Drawing.Point(20, 180);
+            this.buttonAudioAlbum.Name = "buttonAudioAlbum";
+            this.buttonAudioAlbum.Size = new System.Drawing.Size(140, 28);
+            this.buttonAudioAlbum.TabIndex = 4;
+            this.buttonAudioAlbum.Text = "Lưu Album";
+            this.buttonAudioAlbum.UseVisualStyleBackColor = true;
+            this.buttonAudioAlbum.Click += new System.EventHandler(this.buttonAudioAlbum_Click);
+            // 
+            // buttonAudioArtist
+            // 
+            this.buttonAudioArtist.Location = new System.Drawing.Point(180, 180);
+            this.buttonAudioArtist.Name = "buttonAudioArtist";
+            this.buttonAudioArtist.Size = new System.Drawing.Size(140, 28);
+            this.buttonAudioArtist.TabIndex = 5;
+            this.buttonAudioArtist.Text = "Lưu Artist";
+            this.buttonAudioArtist.UseVisualStyleBackColor = true;
+            this.buttonAudioArtist.Click += new System.EventHandler(this.buttonAudioArtist_Click);
+            // 
             // FormMain
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -1104,7 +1192,7 @@
             this.Controls.Add(this.groupBox1);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "FormMain";
-            this.Text = "Viet Nam Rename";
+            this.Text = "Viet Nam Rename 1.0";
             this.Load += new System.EventHandler(this.FormMain_Load);
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
@@ -1135,6 +1223,8 @@
             this.groupBox2.ResumeLayout(false);
             this.groupBox2.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridRename)).EndInit();
+            this.tabPage4.ResumeLayout(false);
+            this.tabPage4.PerformLayout();
             this.ResumeLayout(false);
 
         }
@@ -1227,6 +1317,13 @@
         private System.Windows.Forms.Label label11;
         private System.Windows.Forms.RadioButton radioSttCuoi;
         private System.Windows.Forms.RadioButton radioSttDau;
+        private System.Windows.Forms.TabPage tabPage4;
+        private System.Windows.Forms.RadioButton radioAudioCopyTitleToName;
+        private System.Windows.Forms.RadioButton radioAudioCopyNameToTitle;
+        private System.Windows.Forms.RadioButton radioAudioRemoveInfo;
+        private System.Windows.Forms.TextBox textAudio;
+        private System.Windows.Forms.Button buttonAudioArtist;
+        private System.Windows.Forms.Button buttonAudioAlbum;
     }
 }
 

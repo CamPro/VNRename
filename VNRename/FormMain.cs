@@ -3,7 +3,7 @@ using System.Data;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices.ComTypes;
+using TagLib;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -17,6 +17,7 @@ namespace VNRename
         public static DataTable myTable;
         public static string myPath = string.Empty;
         public static string myHistory = Path.GetTempPath() + "histories.log";
+        public static string myError = Path.GetTempPath() + "errors.log";
 
         public FormMain()
         {
@@ -74,13 +75,13 @@ namespace VNRename
                 }
                 try
                 {
-                    if (File.Exists(filepath))
+                    if (System.IO.File.Exists(filepath))
                     {
-                        File.Move(filepath, tmppath);
+                        System.IO.File.Move(filepath, tmppath);
                         for (int j = 2; j < 999999999; j++)
                         {
                             newpath = string.Join("\\", array);
-                            if (File.Exists(newpath))
+                            if (System.IO.File.Exists(newpath))
                             {
                                 FileInfo info = new FileInfo(newpath);
                                 if (string.IsNullOrEmpty(name))
@@ -96,7 +97,7 @@ namespace VNRename
                             Thread.Sleep(5);
                         }
                         histories += $"{filepath}|{newpath}{Environment.NewLine}";
-                        File.Move(tmppath, newpath);
+                        System.IO.File.Move(tmppath, newpath);
                     }
                     if (Directory.Exists(filepath))
                     {
@@ -123,20 +124,27 @@ namespace VNRename
                         Directory.Move(tmppath, newpath);
                     }
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
+                    System.IO.File.AppendAllText(myError, ex.Message + Environment.NewLine);
                 }
             }
-            File.WriteAllText(myHistory, histories);
+            System.IO.File.WriteAllText(myHistory, histories);
             GetFileFolder();
             buttonRestore.Enabled = true;
+            if (System.IO.File.Exists(myError))
+            {
+                Process.Start(myError);
+                Thread.Sleep(1000);
+                System.IO.File.Delete(myError);
+            }
         }
 
         private void buttonRestore_Click(object sender, EventArgs e)
         {
-            if (File.Exists(myHistory))
+            if (System.IO.File.Exists(myHistory))
             {
-                string[] lines = File.ReadAllLines(myHistory);
+                string[] lines = System.IO.File.ReadAllLines(myHistory);
                 if (lines.Length == 0)
                 {
 
@@ -150,10 +158,10 @@ namespace VNRename
                             string oldpath = lines[i].Split('|')[0];
                             string newpath = lines[i].Split('|')[1];
                             string tmppath = newpath + "~%" + new Random().Next(0, 9);
-                            if (File.Exists(newpath))
+                            if (System.IO.File.Exists(newpath))
                             {
-                                File.Move(newpath, tmppath);
-                                File.Move(tmppath, oldpath);
+                                System.IO.File.Move(newpath, tmppath);
+                                System.IO.File.Move(tmppath, oldpath);
                             }
                             if (Directory.Exists(newpath))
                             {
@@ -161,14 +169,21 @@ namespace VNRename
                                 Directory.Move(tmppath, oldpath);
                             }
                         }
-                        catch (Exception)
+                        catch (Exception ex)
                         {
+                            System.IO.File.AppendAllText(myError, ex.Message + Environment.NewLine);
                         }
                     }
                 }
-                File.Delete(myHistory);
+                System.IO.File.Delete(myHistory);
                 GetFileFolder();
                 buttonRestore.Enabled = false;
+                if (System.IO.File.Exists(myError))
+                {
+                    Process.Start(myError);
+                    Thread.Sleep(1000);
+                    System.IO.File.Delete(myError);
+                }
             }
         }
 
@@ -224,6 +239,11 @@ namespace VNRename
             textStt.Text = " - ";
             radioSttDau.Checked = false;
             radioSttCuoi.Checked = false;
+            // tab khac
+            radioAudioRemoveInfo.Checked = false;
+            radioAudioCopyNameToTitle.Checked = false;
+            radioAudioCopyTitleToName.Checked = false;
+            textAudio.Text = string.Empty;
         }
 
         private void buttonExportFilename_Click(object sender, EventArgs e)
@@ -239,7 +259,7 @@ namespace VNRename
             if (dialog.ShowDialog() == DialogResult.OK)
             {
                 string fileName = dialog.FileName;
-                File.WriteAllText(fileName, text);
+                System.IO.File.WriteAllText(fileName, text);
                 Process.Start(fileName);
             }
         }
@@ -251,7 +271,7 @@ namespace VNRename
             dialog.Filter = "TXT files|*.txt";
             if (dialog.ShowDialog() == DialogResult.OK)
             {
-                string[] texts = File.ReadAllLines(dialog.FileName);
+                string[] texts = System.IO.File.ReadAllLines(dialog.FileName);
                 for (int i = 0; i < texts.Length && i < myTable.Rows.Count; i++)
                 {
                     myTable.Rows[i]["_cNewName"] = texts[i];
@@ -272,7 +292,7 @@ namespace VNRename
             if (dialog.ShowDialog() == DialogResult.OK)
             {
                 string fileName = dialog.FileName;
-                File.WriteAllText(fileName, text);
+                System.IO.File.WriteAllText(fileName, text);
                 Process.Start(fileName);
             }
         }
@@ -556,6 +576,177 @@ namespace VNRename
             NewNameResult();
         }
 
+        private void radioAudioRemoveInfo_CheckedChanged(object sender, EventArgs e)
+        {
+            if (radioAudioRemoveInfo.Checked == false)
+            {
+                return;
+            }
+            DialogResult dialogResult = MessageBox.Show("Bạn có muốn thực hiện hành động?", "", MessageBoxButtons.YesNo);
+            bool isOk = dialogResult == DialogResult.Yes;
+
+            progressStatus.Maximum = myTable.Rows.Count;
+            for (int i = 0; i < myTable.Rows.Count && isOk; i++)
+            {
+                try
+                {
+                    progressStatus.Value = (i + 1);
+                    string filepath = myTable.Rows[i]["_cFilepath"].ToString();
+                    if (System.IO.File.Exists(filepath))
+                    {
+                        TagLib.File file = TagLib.File.Create(filepath);
+                        file.RemoveTags(TagTypes.Id3v1);
+                        file.RemoveTags(TagTypes.Id3v2);
+                        file.Save();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.IO.File.AppendAllText(myError, ex.Message + Environment.NewLine);
+                }
+            }
+            buttonReset_Click(null, null);
+            if (System.IO.File.Exists(myError))
+            {
+                Process.Start(myError);
+                Thread.Sleep(1000);
+                System.IO.File.Delete(myError);
+            }
+        }
+
+        private void radioAudioCopyNameToTitle_CheckedChanged(object sender, EventArgs e)
+        {
+            if (radioAudioCopyNameToTitle.Checked == false)
+            {
+                return;
+            }
+            DialogResult dialogResult = MessageBox.Show("Bạn có muốn thực hiện hành động?", "", MessageBoxButtons.YesNo);
+            bool isOk = dialogResult == DialogResult.Yes;
+
+            progressStatus.Maximum = myTable.Rows.Count;
+            for (int i = 0; i < myTable.Rows.Count && isOk; i++)
+            {
+                try
+                {
+                    progressStatus.Value = (i + 1);
+                    string filepath = myTable.Rows[i]["_cFilepath"].ToString();
+                    if (System.IO.File.Exists(filepath))
+                    {
+                        TagLib.File file = TagLib.File.Create(filepath);
+                        FileInfo info = new FileInfo(filepath);
+                        string name = info.Name.Substring(0, info.Name.Length - info.Extension.Length);
+                        file.Tag.Title = name;
+                        file.Save();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.IO.File.AppendAllText(myError, ex.Message + Environment.NewLine);
+                }
+            }
+            buttonReset_Click(null, null);
+            if (System.IO.File.Exists(myError))
+            {
+                Process.Start(myError);
+                Thread.Sleep(1000);
+                System.IO.File.Delete(myError);
+            }
+        }
+
+        private void radioAudioCopyTitleToName_CheckedChanged(object sender, EventArgs e)
+        {
+            if (radioAudioCopyTitleToName.Checked == false)
+            {
+                return;
+            }
+            for (int i = 0; i < myTable.Rows.Count; i++)
+            {
+                try
+                {
+                    string filepath = myTable.Rows[i]["_cFilepath"].ToString();
+                    if (System.IO.File.Exists(filepath))
+                    {
+                        TagLib.File file = TagLib.File.Create(filepath);
+                        FileInfo info = new FileInfo(filepath);
+
+                        myTable.Rows[i]["_cNewName"] = file.Tag.Title + info.Extension;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.IO.File.AppendAllText(myError, ex.Message + Environment.NewLine);
+                }
+            }
+            if (System.IO.File.Exists(myError))
+            {
+                Process.Start(myError);
+                Thread.Sleep(1000);
+                System.IO.File.Delete(myError);
+            }
+        }
+
+        private void buttonAudioAlbum_Click(object sender, EventArgs e)
+        {
+            string text = textAudio.Text;
+            progressStatus.Maximum = myTable.Rows.Count;
+            for (int i = 0; i < myTable.Rows.Count; i++)
+            {
+                try
+                {
+                    progressStatus.Value = (i + 1);
+                    string filepath = myTable.Rows[i]["_cFilepath"].ToString();
+                    if (System.IO.File.Exists(filepath))
+                    {
+                        TagLib.File file = TagLib.File.Create(filepath);
+                        file.Tag.Album = text;
+                        file.Save();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.IO.File.AppendAllText(myError, ex.Message + Environment.NewLine);
+                }
+            }
+            buttonReset_Click(null, null);
+            if (System.IO.File.Exists(myError))
+            {
+                Process.Start(myError);
+                Thread.Sleep(1000);
+                System.IO.File.Delete(myError);
+            }
+        }
+
+        private void buttonAudioArtist_Click(object sender, EventArgs e)
+        {
+            string text = textAudio.Text;
+            progressStatus.Maximum = myTable.Rows.Count;
+            for (int i = 0; i < myTable.Rows.Count; i++)
+            {
+                try
+                {
+                    progressStatus.Value = (i + 1);
+                    string filepath = myTable.Rows[i]["_cFilepath"].ToString();
+                    if (System.IO.File.Exists(filepath))
+                    {
+                        TagLib.File file = TagLib.File.Create(filepath);
+                        file.Tag.AlbumArtists = new string[] { text };
+                        file.Save();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.IO.File.AppendAllText(myError, ex.Message + Environment.NewLine);
+                }
+            }
+            buttonReset_Click(null, null);
+            if (System.IO.File.Exists(myError))
+            {
+                Process.Start(myError);
+                Thread.Sleep(1000);
+                System.IO.File.Delete(myError);
+            }
+        }
+
         public void SetPath()
         {
             textPath.Text = myPath;
@@ -599,267 +790,280 @@ namespace VNRename
         {
             for (int i = 0; i < myTable.Rows.Count; i++)
             {
-                string namenew = string.Empty;
-                string extold = string.Empty;
-                string extnew = string.Empty;
-                //string oldname = myTable.Rows[i]["_cOldName"].ToString();
-                string filepath = myTable.Rows[i]["_cFilepath"].ToString();
-                bool isFile = true;
-                if (File.Exists(filepath))
+                try
                 {
-                    FileInfo info = new FileInfo(filepath);
-                    namenew = info.Name.Substring(0, info.Name.Length - info.Extension.Length);
-                    extold = info.Extension;
-                    extnew = info.Extension;
-                }
-                else if (Directory.Exists(filepath))
-                {
-                    isFile = false;
-                    DirectoryInfo info = new DirectoryInfo(filepath);
-                    namenew = info.Name;
-                }
-                else
-                {
-                    continue;
-                }
-
-                if (radioVietHoaChuCaiDau.Checked)
-                {
-                    string[] array = namenew.Split(' ');
-                    for (int j = 0; j < array.Length; j++)
+                    string namenew = string.Empty;
+                    string extold = string.Empty;
+                    string extnew = string.Empty;
+                    //string oldname = myTable.Rows[i]["_cOldName"].ToString();
+                    string filepath = myTable.Rows[i]["_cFilepath"].ToString();
+                    bool isFile = true;
+                    if (System.IO.File.Exists(filepath))
                     {
-                        if (array[j].Length > 0)
-                        {
-                            string first = array[j].Substring(0, 1).ToUpper();
-                            string last = array[j].Substring(1).ToLower();
-                            array[j] = first + last;
-                        }
+                        FileInfo info = new FileInfo(filepath);
+                        namenew = info.Name.Substring(0, info.Name.Length - info.Extension.Length);
+                        extold = info.Extension;
+                        extnew = info.Extension;
                     }
-                    namenew = string.Join(" ", array);
-                    extnew = extold;
-                }
-                if (radioVietHoaChuCaiDauTien.Checked && namenew.Length > 0)
-                {
-                    string first = namenew.Substring(0, 1).ToUpper();
-                    string last = namenew.Substring(1).ToLower();
-                    namenew = first + last;
-                    extnew = extold;
-                }
-                if (radioVietHoaToanBo.Checked)
-                {
-                    namenew = namenew.ToUpper();
-                    extnew = extold;
-                }
-                if (radioVietThuongToanBo.Checked)
-                {
-                    namenew = namenew.ToLower();
-                    extnew = extold;
-                }
-                if (radioLoaiBoKhoangTrang.Checked)
-                {
-                    namenew = namenew.Replace(" ", "");
-                    extnew = extold;
-                }
-                if (radioKhoiPhucKhoangTrang.Checked)
-                {
-                    string[] uppers = "Q W E R T Y U I O P A S D F G H J K L Z X C V B N M".Split(' ');
-                    foreach (var item in uppers)
+                    else if (Directory.Exists(filepath))
                     {
-                        namenew = namenew.Replace(item, " " + item);
-                    }
-                    extnew = extold;
-                }
-                if (radioChuyenTenThanhSo.Checked)
-                {
-                    byte[] bt = Encoding.Default.GetBytes(namenew);
-                    var hexString = BitConverter.ToString(bt);
-                    namenew = hexString.Replace("-", "");
-                }
-                if (radioDaoNguocTen.Checked)
-                {
-                    char[] charArray = namenew.ToCharArray();
-                    Array.Reverse(charArray);
-                    namenew = new string(charArray);
-                    extnew = extold;
-                }
-                if (checkLoaiBoDauTiengViet.Checked)
-                {
-                    const string FindText = "áàảãạâấầẩẫậăắằẳẵặđéèẻẽẹêếềểễệíìỉĩịóòỏõọôốồổỗộơớờởỡợúùủũụưứừửữựýỳỷỹỵÁÀẢÃẠÂẤẦẨẪẬĂẮẰẲẴẶĐÉÈẺẼẸÊẾỀỂỄỆÍÌỈĨỊÓÒỎÕỌÔỐỒỔỖỘƠỚỜỞỠỢÚÙỦŨỤƯỨỪỬỮỰÝỲỶỸỴ";
-                    const string ReplText = "aaaaaaaaaaaaaaaaadeeeeeeeeeeeiiiiiooooooooooooooooouuuuuuuuuuuyyyyyAAAAAAAAAAAAAAAAADEEEEEEEEEEEIIIIIOOOOOOOOOOOOOOOOOUUUUUUUUUUUYYYYY";
-                    int index = -1;
-                    char[] arrChar = FindText.ToCharArray();
-                    while ((index = namenew.IndexOfAny(arrChar)) != -1)
-                    {
-                        int index2 = FindText.IndexOf(namenew[index]);
-                        namenew = namenew.Replace(namenew[index], ReplText[index2]);
-                    }
-                    extnew = extold;
-                }
-                if (checkXoaKyTuDacBiet.Checked)
-                {
-                    namenew = Regex.Replace(namenew, @"[^A-Za-z0-9]", "");
-                    extnew = extold;
-                }
-                if (checkGopNhieuKhoangTrang.Checked)
-                {
-                    namenew = Regex.Replace(namenew, @"\s+", " ");
-                    extnew = extold;
-                }
-                if (checkBoKhoangTrangDauCuoi.Checked)
-                {
-                    namenew = namenew.Trim();
-                    extnew = extold;
-                }
-                if (checkLoaiBoSo.Checked)
-                {
-                    if (radioLoaiBoSoDau.Checked)
-                    {
-                        namenew = Regex.Replace(namenew, @"^\d+", "");
-                    }
-                    else if (radioLoaiBoSoCuoi.Checked)
-                    {
-                        namenew = Regex.Replace(namenew, @"\d+$", "");
+                        isFile = false;
+                        DirectoryInfo info = new DirectoryInfo(filepath);
+                        namenew = info.Name;
                     }
                     else
                     {
-                        namenew = Regex.Replace(namenew, @"\d+", "");
+                        continue;
                     }
-                    extnew = extold;
-                }
-                if (!string.IsNullOrEmpty(textDoiDuoiTapTin.Text))
-                {
-                    extnew = textDoiDuoiTapTin.Text;
-                }
 
-                // tab nang cao
-                if (textThay.Text.Length > 0)
-                {
-                    string search = textThay.Text;
-                    string replace = textThayBang.Text;
-                    namenew = namenew.Replace(search, replace);
-                    extnew = extold;
-                }
-                if (!string.IsNullOrEmpty(textDang.Text))
-                {
-                    string search = textDang.Text;
-                    string replace = textDangBang.Text;
-                    try { namenew = Regex.Replace(namenew, search, replace); } catch { }
-                    extnew = extold;
-                }
-                if (numSoKyTu.Value > 0)
-                {
-                    int length = Convert.ToInt32(numSoKyTu.Value);
-                    if (radioGiuSoKyTu.Checked)
+                    if (radioVietHoaChuCaiDau.Checked)
                     {
-                        if (radioDauSoKyTu.Checked)
+                        string[] array = namenew.Split(' ');
+                        for (int j = 0; j < array.Length; j++)
                         {
-                            namenew = namenew.Substring(0, length);
+                            if (array[j].Length > 0)
+                            {
+                                string first = array[j].Substring(0, 1).ToUpper();
+                                string last = array[j].Substring(1).ToLower();
+                                array[j] = first + last;
+                            }
                         }
-                        if (radioCuoiSoKyTu.Checked)
-                        {
-                            namenew = namenew.Substring(namenew.Length - length);
-                        }
+                        namenew = string.Join(" ", array);
+                        extnew = extold;
                     }
-                    if (radioBoSoKyTu.Checked)
+                    if (radioVietHoaChuCaiDauTien.Checked && namenew.Length > 0)
                     {
-                        if (radioDauSoKyTu.Checked)
-                        {
-                            namenew = namenew.Substring(length);
-                        }
-                        if (radioCuoiSoKyTu.Checked)
-                        {
-                            namenew = namenew.Substring(0, namenew.Length - length);
-                        }
+                        string first = namenew.Substring(0, 1).ToUpper();
+                        string last = namenew.Substring(1).ToLower();
+                        namenew = first + last;
+                        extnew = extold;
                     }
-                    extnew = extold;
-                }
-                if (textDenKyTu.Text.Length > 0)
-                {
-                    string timkiem = textDenKyTu.Text;
-                    int index = namenew.IndexOf(timkiem);
-                    if (radioGiuDenKyTu.Checked && index > 0)
+                    if (radioVietHoaToanBo.Checked)
                     {
-                        if (radioTruocDenKyTu.Checked)
-                        {
-                            namenew = namenew.Substring(0, index);
-                        }
-                        if (radioSauDenKyTu.Checked)
-                        {
-                            namenew = namenew.Substring(index + timkiem.Length);
-                        }
+                        namenew = namenew.ToUpper();
+                        extnew = extold;
                     }
-                    if (radioBoDenKyTu.Checked && index > 0)
+                    if (radioVietThuongToanBo.Checked)
                     {
-                        if (radioTruocDenKyTu.Checked)
-                        {
-                            namenew = namenew.Substring(index);
-                        }
-                        if (radioSauDenKyTu.Checked)
-                        {
-                            namenew = namenew.Substring(0, index + timkiem.Length);
-                        }
+                        namenew = namenew.ToLower();
+                        extnew = extold;
                     }
-                    extnew = extold;
-                }
-                if (textThemKyTu.Text.Length > 0)
-                {
-                    string them = textThemKyTu.Text;
-                    if (radioThemKyTuDau.Checked)
+                    if (radioLoaiBoKhoangTrang.Checked)
                     {
-                        namenew = them + namenew;
+                        namenew = namenew.Replace(" ", "");
+                        extnew = extold;
                     }
-                    if (radioThemKyTuCuoi.Checked)
+                    if (radioKhoiPhucKhoangTrang.Checked)
                     {
-                        namenew += them;
+                        string[] uppers = "Q W E R T Y U I O P A S D F G H J K L Z X C V B N M".Split(' ');
+                        foreach (var item in uppers)
+                        {
+                            namenew = namenew.Replace(item, " " + item);
+                        }
+                        extnew = extold;
                     }
-                    extnew = extold;
-                }
-                if (radioCheckMD5.Checked)
-                {
-                    namenew = isFile ? CalculateMD5(filepath) : "";
-                    extnew = string.Empty;
-                }
-                if (radioCheckSHA1.Checked)
-                {
-                    namenew = isFile ? CalculateSHA1(filepath) : "";
-                    extnew = string.Empty;
-                }
-                if (radioCheckMD5toName.Checked)
-                {
-                    namenew = isFile ? CalculateMD5(filepath) : "";
-                    extnew = isFile ? extold : string.Empty;
-                }
-                if (radioCheckSHA1toName.Checked)
-                {
-                    namenew = isFile ? CalculateSHA1(filepath) : "";
-                    extnew = isFile ? extold : string.Empty;
-                }
+                    if (radioChuyenTenThanhSo.Checked)
+                    {
+                        byte[] bt = Encoding.Default.GetBytes(namenew);
+                        var hexString = BitConverter.ToString(bt);
+                        namenew = hexString.Replace("-", "");
+                    }
+                    if (radioDaoNguocTen.Checked)
+                    {
+                        char[] charArray = namenew.ToCharArray();
+                        Array.Reverse(charArray);
+                        namenew = new string(charArray);
+                        extnew = extold;
+                    }
+                    if (checkLoaiBoDauTiengViet.Checked)
+                    {
+                        const string FindText = "áàảãạâấầẩẫậăắằẳẵặđéèẻẽẹêếềểễệíìỉĩịóòỏõọôốồổỗộơớờởỡợúùủũụưứừửữựýỳỷỹỵÁÀẢÃẠÂẤẦẨẪẬĂẮẰẲẴẶĐÉÈẺẼẸÊẾỀỂỄỆÍÌỈĨỊÓÒỎÕỌÔỐỒỔỖỘƠỚỜỞỠỢÚÙỦŨỤƯỨỪỬỮỰÝỲỶỸỴ";
+                        const string ReplText = "aaaaaaaaaaaaaaaaadeeeeeeeeeeeiiiiiooooooooooooooooouuuuuuuuuuuyyyyyAAAAAAAAAAAAAAAAADEEEEEEEEEEEIIIIIOOOOOOOOOOOOOOOOOUUUUUUUUUUUYYYYY";
+                        int index = -1;
+                        char[] arrChar = FindText.ToCharArray();
+                        while ((index = namenew.IndexOfAny(arrChar)) != -1)
+                        {
+                            int index2 = FindText.IndexOf(namenew[index]);
+                            namenew = namenew.Replace(namenew[index], ReplText[index2]);
+                        }
+                        extnew = extold;
+                    }
+                    if (checkXoaKyTuDacBiet.Checked)
+                    {
+                        namenew = Regex.Replace(namenew, @"[^A-Za-z0-9]", "");
+                        extnew = extold;
+                    }
+                    if (checkGopNhieuKhoangTrang.Checked)
+                    {
+                        namenew = Regex.Replace(namenew, @"\s+", " ");
+                        extnew = extold;
+                    }
+                    if (checkBoKhoangTrangDauCuoi.Checked)
+                    {
+                        namenew = namenew.Trim();
+                        extnew = extold;
+                    }
+                    if (checkLoaiBoSo.Checked)
+                    {
+                        if (radioLoaiBoSoDau.Checked)
+                        {
+                            namenew = Regex.Replace(namenew, @"^\d+", "");
+                        }
+                        else if (radioLoaiBoSoCuoi.Checked)
+                        {
+                            namenew = Regex.Replace(namenew, @"\d+$", "");
+                        }
+                        else
+                        {
+                            namenew = Regex.Replace(namenew, @"\d+", "");
+                        }
+                        extnew = extold;
+                    }
+                    if (!string.IsNullOrEmpty(textDoiDuoiTapTin.Text))
+                    {
+                        extnew = textDoiDuoiTapTin.Text;
+                    }
 
-                // tab so thu tu
-                if (radioSttDau.Checked || radioSttCuoi.Checked)
-                {
-                    int numStart = Convert.ToInt32(numSttBatDau.Value);
-                    int numSoChu = Convert.ToInt32(numSttChuSo.Value);
-                    string kytunoi = textStt.Text;
-                    int stt = numStart + i;
-                    string zero = string.Empty;
-                    for (int z = 0; z < numSoChu - stt.ToString().Length; z++)
+                    // tab nang cao
+                    if (textThay.Text.Length > 0)
                     {
-                        zero += "0";
+                        string search = textThay.Text;
+                        string replace = textThayBang.Text;
+                        namenew = namenew.Replace(search, replace);
+                        extnew = extold;
                     }
-                    if (radioSttDau.Checked)
+                    if (!string.IsNullOrEmpty(textDang.Text))
                     {
-                        namenew = $"{zero}{stt}{kytunoi}{namenew}";
+                        string search = textDang.Text;
+                        string replace = textDangBang.Text;
+                        try { namenew = Regex.Replace(namenew, search, replace); } catch { }
+                        extnew = extold;
                     }
-                    if (radioSttCuoi.Checked)
+                    if (numSoKyTu.Value > 0)
                     {
-                        namenew = $"{namenew}{kytunoi}{zero}{stt}";
+                        int length = Convert.ToInt32(numSoKyTu.Value);
+                        if (radioGiuSoKyTu.Checked)
+                        {
+                            if (radioDauSoKyTu.Checked)
+                            {
+                                namenew = namenew.Substring(0, length);
+                            }
+                            if (radioCuoiSoKyTu.Checked)
+                            {
+                                namenew = namenew.Substring(namenew.Length - length);
+                            }
+                        }
+                        if (radioBoSoKyTu.Checked)
+                        {
+                            if (radioDauSoKyTu.Checked)
+                            {
+                                namenew = namenew.Substring(length);
+                            }
+                            if (radioCuoiSoKyTu.Checked)
+                            {
+                                namenew = namenew.Substring(0, namenew.Length - length);
+                            }
+                        }
+                        extnew = extold;
                     }
-                    extnew = extold;
-                }
+                    if (textDenKyTu.Text.Length > 0)
+                    {
+                        string timkiem = textDenKyTu.Text;
+                        int index = namenew.IndexOf(timkiem);
+                        if (radioGiuDenKyTu.Checked && index > 0)
+                        {
+                            if (radioTruocDenKyTu.Checked)
+                            {
+                                namenew = namenew.Substring(0, index);
+                            }
+                            if (radioSauDenKyTu.Checked)
+                            {
+                                namenew = namenew.Substring(index + timkiem.Length);
+                            }
+                        }
+                        if (radioBoDenKyTu.Checked && index > 0)
+                        {
+                            if (radioTruocDenKyTu.Checked)
+                            {
+                                namenew = namenew.Substring(index);
+                            }
+                            if (radioSauDenKyTu.Checked)
+                            {
+                                namenew = namenew.Substring(0, index + timkiem.Length);
+                            }
+                        }
+                        extnew = extold;
+                    }
+                    if (textThemKyTu.Text.Length > 0)
+                    {
+                        string them = textThemKyTu.Text;
+                        if (radioThemKyTuDau.Checked)
+                        {
+                            namenew = them + namenew;
+                        }
+                        if (radioThemKyTuCuoi.Checked)
+                        {
+                            namenew += them;
+                        }
+                        extnew = extold;
+                    }
+                    if (radioCheckMD5.Checked)
+                    {
+                        namenew = isFile ? CalculateMD5(filepath) : "";
+                        extnew = string.Empty;
+                    }
+                    if (radioCheckSHA1.Checked)
+                    {
+                        namenew = isFile ? CalculateSHA1(filepath) : "";
+                        extnew = string.Empty;
+                    }
+                    if (radioCheckMD5toName.Checked)
+                    {
+                        namenew = isFile ? CalculateMD5(filepath) : "";
+                        extnew = isFile ? extold : string.Empty;
+                    }
+                    if (radioCheckSHA1toName.Checked)
+                    {
+                        namenew = isFile ? CalculateSHA1(filepath) : "";
+                        extnew = isFile ? extold : string.Empty;
+                    }
 
-                // export result
-                myTable.Rows[i]["_cNewName"] = namenew + extnew;
+                    // tab so thu tu
+                    if (radioSttDau.Checked || radioSttCuoi.Checked)
+                    {
+                        int numStart = Convert.ToInt32(numSttBatDau.Value);
+                        int numSoChu = Convert.ToInt32(numSttChuSo.Value);
+                        string kytunoi = textStt.Text;
+                        int stt = numStart + i;
+                        string zero = string.Empty;
+                        for (int z = 0; z < numSoChu - stt.ToString().Length; z++)
+                        {
+                            zero += "0";
+                        }
+                        if (radioSttDau.Checked)
+                        {
+                            namenew = $"{zero}{stt}{kytunoi}{namenew}";
+                        }
+                        if (radioSttCuoi.Checked)
+                        {
+                            namenew = $"{namenew}{kytunoi}{zero}{stt}";
+                        }
+                        extnew = extold;
+                    }
+
+                    // export result
+                    myTable.Rows[i]["_cNewName"] = namenew + extnew;
+                }
+                catch (Exception ex)
+                {
+                    System.IO.File.AppendAllText(myError, ex.Message + Environment.NewLine);
+                }
+            }
+            if (System.IO.File.Exists(myError))
+            {
+                Process.Start(myError);
+                Thread.Sleep(1000);
+                System.IO.File.Delete(myError);
             }
         }
 
@@ -867,7 +1071,7 @@ namespace VNRename
         {
             using (var md5 = MD5.Create())
             {
-                using (var stream = File.OpenRead(filename))
+                using (var stream = System.IO.File.OpenRead(filename))
                 {
                     var hash = md5.ComputeHash(stream);
                     return BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
@@ -879,7 +1083,7 @@ namespace VNRename
         {
             using (var sha1 = SHA1.Create())
             {
-                using (var stream = File.OpenRead(filename))
+                using (var stream = System.IO.File.OpenRead(filename))
                 {
                     var hash = sha1.ComputeHash(stream);
                     return BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
