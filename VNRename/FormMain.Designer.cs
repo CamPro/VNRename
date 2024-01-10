@@ -95,12 +95,12 @@
             this.tabPage3 = new System.Windows.Forms.TabPage();
             this.radioSttCuoi = new System.Windows.Forms.RadioButton();
             this.radioSttDau = new System.Windows.Forms.RadioButton();
-            this.textStt = new System.Windows.Forms.TextBox();
-            this.label13 = new System.Windows.Forms.Label();
-            this.numSttBatDau = new System.Windows.Forms.NumericUpDown();
-            this.label12 = new System.Windows.Forms.Label();
-            this.numSttChuSo = new System.Windows.Forms.NumericUpDown();
             this.label11 = new System.Windows.Forms.Label();
+            this.textStt = new System.Windows.Forms.TextBox();
+            this.numSttChuSo = new System.Windows.Forms.NumericUpDown();
+            this.label13 = new System.Windows.Forms.Label();
+            this.label12 = new System.Windows.Forms.Label();
+            this.numSttBatDau = new System.Windows.Forms.NumericUpDown();
             this.textPath = new System.Windows.Forms.TextBox();
             this.buttonBrowser = new System.Windows.Forms.Button();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
@@ -128,8 +128,8 @@
             this.groupBox8.SuspendLayout();
             this.groupBox3.SuspendLayout();
             this.tabPage3.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.numSttBatDau)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.numSttChuSo)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.numSttBatDau)).BeginInit();
             this.groupBox2.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridRename)).BeginInit();
             this.SuspendLayout();
@@ -197,6 +197,7 @@
             // 
             // buttonRestore
             // 
+            this.buttonRestore.Enabled = false;
             this.buttonRestore.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.buttonRestore.Location = new System.Drawing.Point(126, 621);
             this.buttonRestore.Name = "buttonRestore";
@@ -884,6 +885,15 @@
             this.radioSttDau.UseVisualStyleBackColor = true;
             this.radioSttDau.CheckedChanged += new System.EventHandler(this.radioSttDau_CheckedChanged);
             // 
+            // label11
+            // 
+            this.label11.AutoSize = true;
+            this.label11.Location = new System.Drawing.Point(15, 26);
+            this.label11.Name = "label11";
+            this.label11.Size = new System.Drawing.Size(61, 15);
+            this.label11.TabIndex = 2;
+            this.label11.Text = "Số chữ số";
+            // 
             // textStt
             // 
             this.textStt.Location = new System.Drawing.Point(82, 60);
@@ -892,37 +902,6 @@
             this.textStt.TabIndex = 7;
             this.textStt.Text = " - ";
             this.textStt.TextChanged += new System.EventHandler(this.textStt_TextChanged);
-            // 
-            // label13
-            // 
-            this.label13.AutoSize = true;
-            this.label13.Location = new System.Drawing.Point(15, 64);
-            this.label13.Name = "label13";
-            this.label13.Size = new System.Drawing.Size(53, 15);
-            this.label13.TabIndex = 6;
-            this.label13.Text = "Ký tự nối";
-            // 
-            // numSttBatDau
-            // 
-            this.numSttBatDau.Location = new System.Drawing.Point(266, 23);
-            this.numSttBatDau.Name = "numSttBatDau";
-            this.numSttBatDau.Size = new System.Drawing.Size(50, 21);
-            this.numSttBatDau.TabIndex = 5;
-            this.numSttBatDau.Value = new decimal(new int[] {
-            1,
-            0,
-            0,
-            0});
-            this.numSttBatDau.ValueChanged += new System.EventHandler(this.numSttStart_ValueChanged);
-            // 
-            // label12
-            // 
-            this.label12.AutoSize = true;
-            this.label12.Location = new System.Drawing.Point(198, 26);
-            this.label12.Name = "label12";
-            this.label12.Size = new System.Drawing.Size(62, 15);
-            this.label12.TabIndex = 4;
-            this.label12.Text = "Bắt đầu từ";
             // 
             // numSttChuSo
             // 
@@ -942,14 +921,36 @@
             0});
             this.numSttChuSo.ValueChanged += new System.EventHandler(this.numSttLuong_ValueChanged);
             // 
-            // label11
+            // label13
             // 
-            this.label11.AutoSize = true;
-            this.label11.Location = new System.Drawing.Point(15, 26);
-            this.label11.Name = "label11";
-            this.label11.Size = new System.Drawing.Size(61, 15);
-            this.label11.TabIndex = 2;
-            this.label11.Text = "Số chữ số";
+            this.label13.AutoSize = true;
+            this.label13.Location = new System.Drawing.Point(15, 64);
+            this.label13.Name = "label13";
+            this.label13.Size = new System.Drawing.Size(53, 15);
+            this.label13.TabIndex = 6;
+            this.label13.Text = "Ký tự nối";
+            // 
+            // label12
+            // 
+            this.label12.AutoSize = true;
+            this.label12.Location = new System.Drawing.Point(198, 26);
+            this.label12.Name = "label12";
+            this.label12.Size = new System.Drawing.Size(62, 15);
+            this.label12.TabIndex = 4;
+            this.label12.Text = "Bắt đầu từ";
+            // 
+            // numSttBatDau
+            // 
+            this.numSttBatDau.Location = new System.Drawing.Point(266, 23);
+            this.numSttBatDau.Name = "numSttBatDau";
+            this.numSttBatDau.Size = new System.Drawing.Size(50, 21);
+            this.numSttBatDau.TabIndex = 5;
+            this.numSttBatDau.Value = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
+            this.numSttBatDau.ValueChanged += new System.EventHandler(this.numSttStart_ValueChanged);
             // 
             // textPath
             // 
@@ -1103,7 +1104,7 @@
             this.Controls.Add(this.groupBox1);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "FormMain";
-            this.Text = "VietNamRename";
+            this.Text = "Viet Nam Rename";
             this.Load += new System.EventHandler(this.FormMain_Load);
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
@@ -1129,8 +1130,8 @@
             this.groupBox3.PerformLayout();
             this.tabPage3.ResumeLayout(false);
             this.tabPage3.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.numSttBatDau)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.numSttChuSo)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.numSttBatDau)).EndInit();
             this.groupBox2.ResumeLayout(false);
             this.groupBox2.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridRename)).EndInit();

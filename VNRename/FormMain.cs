@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Data;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices.ComTypes;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -14,6 +16,7 @@ namespace VNRename
     {
         public static DataTable myTable;
         public static string myPath = string.Empty;
+        public static string myHistory = Path.GetTempPath() + "histories.log";
 
         public FormMain()
         {
@@ -48,8 +51,12 @@ namespace VNRename
 
         private void buttonRename_Click(object sender, EventArgs e)
         {
+            string histories = string.Empty;
+            histories += $"[{myPath}]|[{DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss")}]{Environment.NewLine}";
+            progressStatus.Maximum = myTable.Rows.Count;
             for (int i = 0; i < myTable.Rows.Count; i++)
             {
+                progressStatus.Value = (i + 1);
                 string newname = myTable.Rows[i]["_cNewName"].ToString();
                 string filepath = myTable.Rows[i]["_cFilepath"].ToString();
                 string[] array = filepath.Split('\\');
@@ -88,6 +95,7 @@ namespace VNRename
                             }
                             Thread.Sleep(5);
                         }
+                        histories += $"{filepath}|{newpath}{Environment.NewLine}";
                         File.Move(tmppath, newpath);
                     }
                     if (Directory.Exists(filepath))
@@ -111,6 +119,7 @@ namespace VNRename
                             }
                             Thread.Sleep(5);
                         }
+                        histories += $"{filepath}|{newpath}{Environment.NewLine}";
                         Directory.Move(tmppath, newpath);
                     }
                 }
@@ -118,12 +127,49 @@ namespace VNRename
                 {
                 }
             }
+            File.WriteAllText(myHistory, histories);
             GetFileFolder();
+            buttonRestore.Enabled = true;
         }
 
         private void buttonRestore_Click(object sender, EventArgs e)
         {
+            if (File.Exists(myHistory))
+            {
+                string[] lines = File.ReadAllLines(myHistory);
+                if (lines.Length == 0)
+                {
 
+                }
+                else
+                {
+                    for (int i = 1; i < lines.Length; i++)
+                    {
+                        try
+                        {
+                            string oldpath = lines[i].Split('|')[0];
+                            string newpath = lines[i].Split('|')[1];
+                            string tmppath = newpath + "~%" + new Random().Next(0, 9);
+                            if (File.Exists(newpath))
+                            {
+                                File.Move(newpath, tmppath);
+                                File.Move(tmppath, oldpath);
+                            }
+                            if (Directory.Exists(newpath))
+                            {
+                                Directory.Move(newpath, tmppath);
+                                Directory.Move(tmppath, oldpath);
+                            }
+                        }
+                        catch (Exception)
+                        {
+                        }
+                    }
+                }
+                File.Delete(myHistory);
+                GetFileFolder();
+                buttonRestore.Enabled = false;
+            }
         }
 
         private void buttonReset_Click(object sender, EventArgs e)
@@ -182,26 +228,64 @@ namespace VNRename
 
         private void buttonExportFilename_Click(object sender, EventArgs e)
         {
-
+            string text = string.Empty;
+            for (int i = 0; i < myTable.Rows.Count; i++)
+            {
+                string oldname = myTable.Rows[i]["_cOldName"].ToString();
+                text += oldname + Environment.NewLine;
+            }
+            SaveFileDialog dialog = new SaveFileDialog();
+            dialog.Filter = "TXT files|*.txt";
+            if (dialog.ShowDialog() == DialogResult.OK)
+            {
+                string fileName = dialog.FileName;
+                File.WriteAllText(fileName, text);
+                Process.Start(fileName);
+            }
         }
 
         private void buttonInportFilename_Click(object sender, EventArgs e)
         {
-
+            OpenFileDialog dialog = new OpenFileDialog();
+            dialog.Title = "Open Text File";
+            dialog.Filter = "TXT files|*.txt";
+            if (dialog.ShowDialog() == DialogResult.OK)
+            {
+                string[] texts = File.ReadAllLines(dialog.FileName);
+                for (int i = 0; i < texts.Length && i < myTable.Rows.Count; i++)
+                {
+                    myTable.Rows[i]["_cNewName"] = texts[i];
+                }
+            }
         }
 
         private void buttonExportResult_Click(object sender, EventArgs e)
         {
-
+            string text = string.Empty;
+            for (int i = 0; i < myTable.Rows.Count; i++)
+            {
+                string newname = myTable.Rows[i]["_cNewName"].ToString();
+                text += newname + Environment.NewLine;
+            }
+            SaveFileDialog dialog = new SaveFileDialog();
+            dialog.Filter = "TXT files|*.txt";
+            if (dialog.ShowDialog() == DialogResult.OK)
+            {
+                string fileName = dialog.FileName;
+                File.WriteAllText(fileName, text);
+                Process.Start(fileName);
+            }
         }
 
         private void buttonRefresh_Click(object sender, EventArgs e)
         {
+            progressStatus.Value = 0;
             GetFileFolder();
         }
 
         private void buttonClear_Click(object sender, EventArgs e)
         {
+            progressStatus.Value = 0;
             myPath = string.Empty;
             myTable.Rows.Clear();
             SetPath();
@@ -214,16 +298,19 @@ namespace VNRename
 
         private void checkRenameFolder_CheckedChanged(object sender, EventArgs e)
         {
+            progressStatus.Value = 0;
             GetFileFolder();
         }
 
         private void checkRenameFile_CheckedChanged(object sender, EventArgs e)
         {
+            progressStatus.Value = 0;
             GetFileFolder();
         }
 
         private void checkRenameSubfolder_CheckedChanged(object sender, EventArgs e)
         {
+            progressStatus.Value = 0;
             GetFileFolder();
         }
 
